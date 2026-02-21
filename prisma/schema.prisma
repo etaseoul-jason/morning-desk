@@ -1,0 +1,110 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ── 섹터 ──────────────────────────────────────────
+model Sector {
+  id               String   @id @default(cuid())
+  label            String
+  summary          String?
+  since            DateTime @default(now())
+  deptTags         String[] @default([])
+  searchQueriesKR  String[] @default([])
+  searchQueriesUS  String[] @default([])
+  classifyKeywords String[] @default([])
+  active           Boolean  @default(true)
+  sortOrder        Int      @default(0)
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  sources   Source[]
+  articles  Article[]
+  briefings Briefing[]
+
+  @@map("sectors")
+}
+
+// ── 뉴스 소스 ─────────────────────────────────────
+model Source {
+  id       String       @id @default(cuid())
+  name     String
+  rssUrl   String?      @map("rss_url")
+  apiType  String?      @map("api_type") // rss | naver_api | scraper
+  region   SourceRegion @default(KR)
+  priority Int          @default(0)
+  active   Boolean      @default(true)
+
+  sectorId String  @map("sector_id")
+  sector   Sector  @relation(fields: [sectorId], references: [id], onDelete: Cascade)
+
+  articles Article[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("sources")
+}
+
+enum SourceRegion {
+  KR
+  US
+}
+
+// ── 기사 ──────────────────────────────────────────
+model Article {
+  id          String   @id @default(cuid())
+  title       String
+  url         String   @unique
+  summary     String?
+  region      SourceRegion @default(KR)
+  confidence  Float?       // 분류 신뢰도 (0~1)
+  clusterId   String?      @map("cluster_id")
+  publishedAt DateTime?    @map("published_at")
+  collectedAt DateTime     @default(now()) @map("collected_at")
+
+  sectorId String  @map("sector_id")
+  sector   Sector  @relation(fields: [sectorId], references: [id], onDelete: Cascade)
+
+  sourceId String? @map("source_id")
+  source   Source? @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+
+  @@index([sectorId, collectedAt(sort: Desc)])
+  @@index([clusterId])
+  @@map("articles")
+}
+
+// ── AI 브리핑 ─────────────────────────────────────
+model Briefing {
+  id            String        @id @default(cuid())
+  timeSlot      BriefingSlot  @map("time_slot")
+  headline      String
+  summary       String
+  trend         BriefingTrend @default(STABLE)
+  trendNote     String?       @map("trend_note")
+  marketImpact  String?       @map("market_impact")
+  reportingTip  String?       @map("reporting_tip")
+  keyFigures    String[]      @default([]) @map("key_figures")
+  sentiment     Float?
+  articleCount  Int           @default(0) @map("article_count")
+  generatedAt   DateTime      @default(now()) @map("generated_at")
+
+  sectorId String  @map("sector_id")
+  sector   Sector  @relation(fields: [sectorId], references: [id], onDelete: Cascade)
+
+  @@index([sectorId, generatedAt(sort: Desc)])
+  @@map("briefings")
+}
+
+enum BriefingSlot {
+  MORNING    // 04:30 조간
+  NIGHT      // 02:30 야간
+}
+
+enum BriefingTrend {
+  ESCALATING
+  STABLE
+  COOLING
+}
