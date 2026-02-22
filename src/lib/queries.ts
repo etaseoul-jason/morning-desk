@@ -56,7 +56,16 @@ export async function getSectorArticles(
       orderBy: { collectedAt: "desc" },
       take: limit,
       skip: offset,
-      include: {
+      select: {
+        id: true,
+        title: true,
+        url: true,
+        summary: true,
+        thumbnail: true,
+        region: true,
+        confidence: true,
+        publishedAt: true,
+        collectedAt: true,
         source: { select: { name: true } },
       },
     }),

@@ -59,6 +59,7 @@ model Article {
   title       String
   url         String   @unique
   summary     String?
+  thumbnail   String?
   region      SourceRegion @default(KR)
   confidence  Float?       // 분류 신뢰도 (0~1)
   clusterId   String?      @map("cluster_id")

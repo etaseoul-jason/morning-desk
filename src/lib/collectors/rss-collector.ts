@@ -12,6 +12,7 @@ export type RawArticle = {
   title: string;
   url: string;
   summary: string | null;
+  thumbnail: string | null;
   publishedAt: Date | null;
   sourceName: string;
   region: SourceRegion;
@@ -26,14 +27,19 @@ type FeedConfig = {
 export async function fetchFeed(feed: FeedConfig): Promise<RawArticle[]> {
   try {
     const parsed = await parser.parseURL(feed.rssUrl);
-    return (parsed.items || []).map((item) => ({
-      title: cleanHtml(item.title || ""),
-      url: item.link || "",
-      summary: cleanHtml(item.contentSnippet || item.content || ""),
-      publishedAt: item.pubDate ? new Date(item.pubDate) : null,
-      sourceName: feed.name,
-      region: feed.region,
-    }));
+    return (parsed.items || []).map((item) => {
+      // RSS 피드에서 썸네일 추출 (media:content, enclosure, content 내 img)
+      const thumbnail = extractThumbnail(item);
+      return {
+        title: cleanHtml(item.title || ""),
+        url: item.link || "",
+        summary: cleanHtml(item.contentSnippet || item.content || ""),
+        thumbnail,
+        publishedAt: item.pubDate ? new Date(item.pubDate) : null,
+        sourceName: feed.name,
+        region: feed.region,
+      };
+    });
   } catch (err) {
     console.error(`[RSS] ${feed.name} 실패:`, (err as Error).message);
     return [];
@@ -53,6 +59,22 @@ export async function fetchAllFeeds(
   }
 
   return articles;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function extractThumbnail(item: any): string | null {
+  // media:content or media:thumbnail
+  if (item["media:content"]?.$.url) return item["media:content"].$.url;
+  if (item["media:thumbnail"]?.$.url) return item["media:thumbnail"].$.url;
+  // enclosure (image type)
+  if (item.enclosure?.url && item.enclosure.type?.startsWith("image/")) {
+    return item.enclosure.url;
+  }
+  // img tag in content
+  const content = item.content || item["content:encoded"] || "";
+  const imgMatch = content.match(/<img[^>]+src=["']([^"']+)["']/);
+  if (imgMatch) return imgMatch[1];
+  return null;
 }
 
 function cleanHtml(text: string): string {

@@ -152,6 +152,7 @@ export async function runCollectPipeline(
           title: article.title,
           url: article.url,
           summary: article.summary || null,
+          thumbnail: article.thumbnail || null,
           region: article.region,
           sectorId: match.sectorId,
           sourceId: sourceId,

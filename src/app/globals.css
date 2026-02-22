@@ -39,26 +39,27 @@
     --radius: 0.5rem;
   }
   .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
+    /* Google News dark mode palette */
+    --background: 225 6% 13%;        /* #202124 */
+    --foreground: 216 12% 92%;       /* #e8eaed */
+    --card: 225 4% 20%;              /* #303134 */
+    --card-foreground: 216 12% 92%;  /* #e8eaed */
+    --popover: 225 4% 20%;
+    --popover-foreground: 216 12% 92%;
+    --primary: 217 89% 76%;          /* #8ab4f8 blue accent */
+    --primary-foreground: 225 6% 13%;
+    --secondary: 225 4% 24%;         /* slightly lighter surface */
+    --secondary-foreground: 216 12% 92%;
+    --muted: 225 4% 20%;
+    --muted-foreground: 210 5% 63%;  /* #9aa0a6 */
+    --accent: 225 4% 24%;
+    --accent-foreground: 216 12% 92%;
+    --destructive: 0 62.8% 50%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
-    --chart-1: 220 70% 50%;
+    --border: 206 6% 25%;            /* #3c4043 */
+    --input: 206 6% 25%;
+    --ring: 217 89% 76%;             /* blue accent */
+    --chart-1: 217 89% 76%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;

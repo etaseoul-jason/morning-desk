@@ -3,9 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LiveIndicator } from "@/components/live-indicator";
+import { WeatherWidget } from "@/components/weather-widget";
+import { SearchBar } from "@/components/search-bar";
 
 const navItems = [
   { href: "/", label: "대시보드" },
+  { href: "/search", label: "검색" },
   { href: "/manage", label: "섹터 관리" },
 ];
 
@@ -29,11 +32,13 @@ export function Header({
               경제부 뉴스 대시보드
             </span>
           </Link>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            <SearchBar />
+            <WeatherWidget />
             <LiveIndicator />
-            <div className="text-right">
+            <div className="text-right hidden sm:block">
               <p className="text-sm font-medium">{greeting}</p>
-              <p className="text-xs text-muted-foreground hidden sm:block">
+              <p className="text-xs text-muted-foreground">
                 {description}
               </p>
             </div>

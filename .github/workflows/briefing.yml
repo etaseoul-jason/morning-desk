@@ -1,0 +1,52 @@
+name: 아침 브리핑 생성
+
+on:
+  schedule:
+    # UTC 21:30 = KST 06:30 (조간 브리핑)
+    - cron: '30 21 * * 0-4'
+    # UTC 17:30 = KST 02:30 (야간 브리핑)
+    - cron: '30 17 * * *'
+  workflow_dispatch:
+    inputs:
+      slot:
+        description: '브리핑 슬롯'
+        required: false
+        default: 'MORNING'
+        type: choice
+        options:
+          - MORNING
+          - NIGHT
+
+jobs:
+  briefing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Prisma generate
+        run: npx prisma generate
+
+      - name: 브리핑 생성
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          # cron 시간에 따라 슬롯 결정
+          HOUR=$(date -u +%H)
+          if [ "$HOUR" -ge 20 ]; then
+            SLOT="MORNING"
+          else
+            SLOT="NIGHT"
+          fi
+          # 수동 실행 시 입력값 우선
+          SLOT="${{ github.event.inputs.slot || env.SLOT }}"
+          npx tsx scripts/briefing.ts --slot=$SLOT

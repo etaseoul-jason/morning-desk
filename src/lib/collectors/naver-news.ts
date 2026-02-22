@@ -70,6 +70,7 @@ export async function collectNaverNews(
           title: cleanNaverHtml(item.title),
           url,
           summary: cleanNaverHtml(item.description),
+          thumbnail: null, // 네이버 API는 썸네일 미제공
           publishedAt: item.pubDate ? new Date(item.pubDate) : null,
           sourceName: "네이버뉴스",
           region: SourceRegion.KR,
