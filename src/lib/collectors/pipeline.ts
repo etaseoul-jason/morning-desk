@@ -2,6 +2,9 @@ import prisma from "@/lib/prisma";
 import { SourceRegion } from "@prisma/client";
 import { RawArticle, fetchAllFeeds } from "./rss-collector";
 import { collectNaverNews } from "./naver-news";
+import { eventBus } from "@/lib/sse/event-bus";
+
+const BREAKING_KEYWORDS = ["속보", "긴급", "단독", "breaking", "flash"];
 
 type SectorWithConfig = {
   id: string;
@@ -142,7 +145,7 @@ export async function runCollectPipeline(
     const sourceId = findSourceId(article.sourceName, sectors);
 
     try {
-      await prisma.article.upsert({
+      const result = await prisma.article.upsert({
         where: { url: article.url },
         update: {},
         create: {
@@ -158,6 +161,22 @@ export async function runCollectPipeline(
         },
       });
       saved++;
+
+      // SSE: 새 기사 이벤트
+      const isBreaking = BREAKING_KEYWORDS.some((kw) =>
+        article.title.toLowerCase().includes(kw)
+      );
+      eventBus.emit({
+        type: isBreaking ? "breaking" : "new_article",
+        data: {
+          id: result.id,
+          title: article.title,
+          url: article.url,
+          region: article.region,
+          sectorId: match.sectorId,
+          sourceName: article.sourceName,
+        },
+      });
     } catch (err) {
       const msg = (err as Error).message;
       if (msg.includes("Unique constraint")) {

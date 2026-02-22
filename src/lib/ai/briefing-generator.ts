@@ -1,6 +1,7 @@
 import { BriefingSlot, BriefingTrend } from "@prisma/client";
 import { callClaude } from "./claude-client";
 import prisma from "@/lib/prisma";
+import { eventBus } from "@/lib/sse/event-bus";
 
 type BriefingOutput = {
   headline: string;
@@ -121,6 +122,19 @@ ${articleList}
   console.log(
     `[Briefing] ${sector.label}: "${result.headline}" (기사 ${articles.length}건)`
   );
+
+  // SSE: 새 브리핑 이벤트
+  eventBus.emit({
+    type: "new_briefing",
+    data: {
+      id: briefing.id,
+      sectorId,
+      sectorLabel: sector.label,
+      headline: result.headline,
+      trend: result.trend,
+    },
+  });
+
   return briefing.id;
 }
 

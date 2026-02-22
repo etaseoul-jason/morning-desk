@@ -2,6 +2,7 @@ import cron from "node-cron";
 import { runCollectPipeline, CollectResult } from "./pipeline";
 import { classifyUnmatchedArticles } from "@/lib/ai/classifier";
 import { generateAllBriefings } from "@/lib/ai/briefing-generator";
+import { clusterArticles } from "@/lib/clustering";
 import { BriefingSlot } from "@prisma/client";
 
 let isCollecting = false;
@@ -98,6 +99,9 @@ export function startScheduler() {
   cron.schedule("0 19 * * *", async () => {
     await safeCollect("조간풀배치", { region: "ALL", includeNaver: true });
     await safeClassify();
+    await clusterArticles().catch((e) =>
+      console.error("[Scheduler] 클러스터링 에러:", e)
+    );
   });
 
   // 04:30 KST 조간 브리핑 생성 (UTC 19:30)

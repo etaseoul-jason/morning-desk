@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { LiveIndicator } from "@/components/live-indicator";
 
 const navItems = [
   { href: "/", label: "대시보드" },
@@ -28,11 +29,14 @@ export function Header({
               경제부 뉴스 대시보드
             </span>
           </Link>
-          <div className="text-right">
-            <p className="text-sm font-medium">{greeting}</p>
-            <p className="text-xs text-muted-foreground hidden sm:block">
-              {description}
-            </p>
+          <div className="flex items-center gap-4">
+            <LiveIndicator />
+            <div className="text-right">
+              <p className="text-sm font-medium">{greeting}</p>
+              <p className="text-xs text-muted-foreground hidden sm:block">
+                {description}
+              </p>
+            </div>
           </div>
         </div>
         {/* Nav */}
