@@ -1,5 +1,6 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
+import { MobileNav } from "@/components/mobile-nav";
 import "./globals.css";
 
 const geistSans = localFont({
@@ -18,6 +19,12 @@ export const metadata: Metadata = {
   description: "경제부 기자용 뉴스 대시보드",
 };
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -26,9 +33,10 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground font-[family-name:var(--font-geist-sans)]`}
       >
         {children}
+        <MobileNav />
       </body>
     </html>
   );
