@@ -1,18 +1,21 @@
 import cron from "node-cron";
 import { runCollectPipeline, CollectResult } from "./pipeline";
+import { classifyUnmatchedArticles } from "@/lib/ai/classifier";
+import { generateAllBriefings } from "@/lib/ai/briefing-generator";
+import { BriefingSlot } from "@prisma/client";
 
-let isRunning = false;
+let isCollecting = false;
 
-async function safeRun(
+async function safeCollect(
   label: string,
   options: Parameters<typeof runCollectPipeline>[0]
 ): Promise<CollectResult | null> {
-  if (isRunning) {
+  if (isCollecting) {
     console.log(`[Scheduler] ${label} 스킵 (이전 작업 진행 중)`);
     return null;
   }
 
-  isRunning = true;
+  isCollecting = true;
   const start = Date.now();
   console.log(`[Scheduler] ${label} 시작`);
 
@@ -27,7 +30,25 @@ async function safeRun(
     console.error(`[Scheduler] ${label} 에러:`, err);
     return null;
   } finally {
-    isRunning = false;
+    isCollecting = false;
+  }
+}
+
+async function safeClassify() {
+  try {
+    if (!process.env.ANTHROPIC_API_KEY) return;
+    await classifyUnmatchedArticles(20);
+  } catch (err) {
+    console.error("[Scheduler] 분류 에러:", err);
+  }
+}
+
+async function safeBriefing(slot: BriefingSlot) {
+  try {
+    if (!process.env.ANTHROPIC_API_KEY) return;
+    await generateAllBriefings(slot);
+  } catch (err) {
+    console.error("[Scheduler] 브리핑 생성 에러:", err);
   }
 }
 
@@ -42,7 +63,7 @@ export function startScheduler() {
 
   // ── 연합뉴스 속보 2분 폴링 (상시) ──
   cron.schedule("*/2 * * * *", () => {
-    safeRun("속보폴링", { region: "KR", includeNaver: false });
+    safeCollect("속보폴링", { region: "KR", includeNaver: false });
   });
 
   // ── KR 뉴스 수집 (시간대별 차등) ──
@@ -50,7 +71,7 @@ export function startScheduler() {
   cron.schedule("*/10 * * * *", () => {
     const h = getKSTHour();
     if (h >= 5 && h < 9) {
-      safeRun("KR-출근전(10분)", { region: "KR", includeNaver: true });
+      safeCollect("KR-출근전(10분)", { region: "KR", includeNaver: true });
     }
   });
 
@@ -58,7 +79,7 @@ export function startScheduler() {
   cron.schedule("*/15 * * * *", () => {
     const h = getKSTHour();
     if (h >= 9 && h < 18) {
-      safeRun("KR-업무중(15분)", { region: "KR", includeNaver: true });
+      safeCollect("KR-업무중(15분)", { region: "KR", includeNaver: true });
     }
   });
 
@@ -67,15 +88,32 @@ export function startScheduler() {
   cron.schedule("*/10 * * * *", () => {
     const h = getKSTHour();
     if (h >= 22 || h < 2) {
-      safeRun("US-미국장(10분)", { region: "US", includeNaver: false });
+      safeCollect("US-미국장(10분)", { region: "US", includeNaver: false });
     }
   });
 
-  // ── 풀배치 ──
-  // 04:00 KST 조간 풀배치 (cron은 UTC → KST-9 = UTC 19:00)
-  cron.schedule("0 19 * * *", () => {
-    safeRun("조간풀배치", { region: "ALL", includeNaver: true });
+  // ── 풀배치 + 분류 + 브리핑 ──
+
+  // 04:00 KST 조간 풀배치 (UTC 19:00)
+  cron.schedule("0 19 * * *", async () => {
+    await safeCollect("조간풀배치", { region: "ALL", includeNaver: true });
+    await safeClassify();
   });
 
-  console.log("[Scheduler] 스케줄 등록 완료");
+  // 04:30 KST 조간 브리핑 생성 (UTC 19:30)
+  cron.schedule("30 19 * * *", () => {
+    safeBriefing(BriefingSlot.MORNING);
+  });
+
+  // 02:30 KST 야간 브리핑 생성 (UTC 17:30)
+  cron.schedule("30 17 * * *", () => {
+    safeBriefing(BriefingSlot.NIGHT);
+  });
+
+  // ── 정기 Claude 분류 (매 3시간) ──
+  cron.schedule("0 */3 * * *", () => {
+    safeClassify();
+  });
+
+  console.log("[Scheduler] 스케줄 등록 완료 (수집 + 분류 + 브리핑)");
 }
