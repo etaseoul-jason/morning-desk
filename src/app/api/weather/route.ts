@@ -1,14 +1,6 @@
 import { NextResponse } from "next/server";
 
-// 캐시: 30분
-let cache: { data: unknown; ts: number } | null = null;
-const CACHE_TTL = 30 * 60 * 1000;
-
 export async function GET() {
-  if (cache && Date.now() - cache.ts < CACHE_TTL) {
-    return NextResponse.json(cache.data);
-  }
-
   const apiKey = process.env.OPENWEATHER_API_KEY;
   if (!apiKey) {
     return NextResponse.json(
@@ -18,9 +10,9 @@ export async function GET() {
   }
 
   try {
-    // 서울 날씨
     const res = await fetch(
-      `https://api.openweathermap.org/data/2.5/weather?q=Seoul&units=metric&lang=kr&appid=${apiKey}`
+      `https://api.openweathermap.org/data/2.5/weather?q=Seoul&units=metric&lang=kr&appid=${apiKey}`,
+      { next: { revalidate: 1800 } } // Next.js fetch 캐시 30분
     );
     if (!res.ok) throw new Error(`OpenWeather: ${res.status}`);
 
@@ -32,8 +24,9 @@ export async function GET() {
       city: "서울",
     };
 
-    cache = { data, ts: Date.now() };
-    return NextResponse.json(data);
+    return NextResponse.json(data, {
+      headers: { "Cache-Control": "public, s-maxage=1800, stale-while-revalidate=3600" },
+    });
   } catch (err) {
     return NextResponse.json(
       { error: (err as Error).message },

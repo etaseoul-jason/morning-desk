@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60; // ISR: 60초마다 갱신
 
 type Props = {
   params: { id: string };

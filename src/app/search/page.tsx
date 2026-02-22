@@ -3,7 +3,7 @@ import { getGreeting } from "@/lib/time-slot";
 import { SearchPageClient } from "@/components/search-page-client";
 import prisma from "@/lib/prisma";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 120; // ISR: 2분마다 갱신 (섹터 목록은 자주 안 바뀜)
 
 export default async function SearchPage() {
   const { title, description } = getGreeting();

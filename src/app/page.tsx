@@ -3,7 +3,7 @@ import { getGreeting } from "@/lib/time-slot";
 import { getActiveSectorsWithLatestBriefing } from "@/lib/queries";
 import { Header } from "@/components/header";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60; // ISR: 60초마다 갱신
 
 export default async function Home() {
   const sectors = await getActiveSectorsWithLatestBriefing();

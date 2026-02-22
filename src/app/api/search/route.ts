@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
+function jsonWithCache(data: unknown) {
+  return NextResponse.json(data, {
+    headers: { "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60" },
+  });
+}
+
 // GET /api/search?q=keyword&sectorId=xxx&from=2026-01-01&to=2026-02-22&limit=30
 export async function GET(req: NextRequest) {
   const sp = req.nextUrl.searchParams;
@@ -69,7 +75,7 @@ export async function GET(req: NextRequest) {
     );
     const total = Number(countResult[0]?.count || 0);
 
-    return NextResponse.json({ articles, total });
+    return jsonWithCache({ articles, total });
   }
 
   // 키워드 없이 필터만 (Prisma ORM 사용)
@@ -104,5 +110,5 @@ export async function GET(req: NextRequest) {
     prisma.article.count({ where }),
   ]);
 
-  return NextResponse.json({ articles, total });
+  return jsonWithCache({ articles, total });
 }
