@@ -18,10 +18,14 @@ async function main() {
   const result = await runCollectPipeline({ region, includeNaver });
   console.log("[Collect] 결과:", result);
 
-  // 2. AI 분류 (키 있을 때만)
+  // 2. AI 분류 (키 있을 때만, 실패해도 파이프라인 계속)
   if (process.env.GEMINI_API_KEY) {
-    console.log("[Collect] AI 분류 시작...");
-    await classifyUnmatchedArticles(20);
+    try {
+      console.log("[Collect] AI 분류 시작...");
+      await classifyUnmatchedArticles(20);
+    } catch (err) {
+      console.warn("[Collect] AI 분류 실패 (스킵):", (err as Error).message);
+    }
   }
 
   // 3. 클러스터링
