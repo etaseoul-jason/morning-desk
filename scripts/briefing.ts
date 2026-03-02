@@ -15,8 +15,8 @@ async function main() {
   const slot =
     slotArg === "NIGHT" ? BriefingSlot.NIGHT : BriefingSlot.MORNING;
 
-  if (!process.env.ANTHROPIC_API_KEY) {
-    console.error("[Briefing] ANTHROPIC_API_KEY 필요");
+  if (!process.env.GEMINI_API_KEY) {
+    console.error("[Briefing] GEMINI_API_KEY 필요");
     process.exit(1);
   }
 

@@ -1,6 +1,6 @@
 /**
  * 미분류 기사를 분석해 자동으로 섹터를 생성하고 분류
- * 사용: DATABASE_URL=... ANTHROPIC_API_KEY=... npx tsx scripts/auto-sectors.ts
+ * 사용: DATABASE_URL=... GEMINI_API_KEY=... npx tsx scripts/auto-sectors.ts
  */
 import prisma from "../src/lib/prisma";
 import { callClaude } from "../src/lib/ai/claude-client";

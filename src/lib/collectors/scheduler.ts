@@ -37,7 +37,7 @@ async function safeCollect(
 
 async function safeClassify() {
   try {
-    if (!process.env.ANTHROPIC_API_KEY) return;
+    if (!process.env.GEMINI_API_KEY) return;
     await classifyUnmatchedArticles(20);
   } catch (err) {
     console.error("[Scheduler] 분류 에러:", err);
@@ -46,7 +46,7 @@ async function safeClassify() {
 
 async function safeBriefing(slot: BriefingSlot) {
   try {
-    if (!process.env.ANTHROPIC_API_KEY) return;
+    if (!process.env.GEMINI_API_KEY) return;
     await generateAllBriefings(slot);
   } catch (err) {
     console.error("[Scheduler] 브리핑 생성 에러:", err);
@@ -114,7 +114,7 @@ export function startScheduler() {
     safeBriefing(BriefingSlot.NIGHT);
   });
 
-  // ── 정기 Claude 분류 (매 3시간) ──
+  // ── 정기 AI 분류 (매 3시간) ──
   cron.schedule("0 */3 * * *", () => {
     safeClassify();
   });

@@ -1,14 +1,14 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-let client: Anthropic | null = null;
+let genAI: GoogleGenerativeAI | null = null;
 
-export function getClaudeClient(): Anthropic {
-  if (!client) {
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) throw new Error("ANTHROPIC_API_KEY 환경변수 필요");
-    client = new Anthropic({ apiKey });
+function getClient(): GoogleGenerativeAI {
+  if (!genAI) {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) throw new Error("GEMINI_API_KEY 환경변수 필요");
+    genAI = new GoogleGenerativeAI(apiKey);
   }
-  return client;
+  return genAI;
 }
 
 export async function callClaude<T>(opts: {
@@ -16,24 +16,28 @@ export async function callClaude<T>(opts: {
   prompt: string;
   maxTokens?: number;
 }): Promise<T> {
-  const claude = getClaudeClient();
-
-  const message = await claude.messages.create({
-    model: "claude-sonnet-4-5-20250929",
-    max_tokens: opts.maxTokens || 2048,
-    system: opts.system,
-    messages: [{ role: "user", content: opts.prompt }],
+  const client = getClient();
+  const model = client.getGenerativeModel({
+    model: "gemini-2.0-flash",
+    systemInstruction: opts.system,
   });
 
-  const text =
-    message.content[0].type === "text" ? message.content[0].text : "";
+  const result = await model.generateContent({
+    contents: [{ role: "user", parts: [{ text: opts.prompt }] }],
+    generationConfig: {
+      maxOutputTokens: opts.maxTokens || 2048,
+      responseMimeType: "application/json",
+    },
+  });
+
+  const text = result.response.text();
 
   // JSON 블록 추출
   const jsonMatch = text.match(/```json\s*([\s\S]*?)\s*```/) ||
     text.match(/\{[\s\S]*\}/);
 
   if (!jsonMatch) {
-    throw new Error("Claude 응답에서 JSON 파싱 실패");
+    throw new Error("LLM 응답에서 JSON 파싱 실패");
   }
 
   const jsonStr = jsonMatch[1] || jsonMatch[0];

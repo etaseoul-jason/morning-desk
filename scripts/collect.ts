@@ -19,7 +19,7 @@ async function main() {
   console.log("[Collect] 결과:", result);
 
   // 2. AI 분류 (키 있을 때만)
-  if (process.env.ANTHROPIC_API_KEY) {
+  if (process.env.GEMINI_API_KEY) {
     console.log("[Collect] AI 분류 시작...");
     await classifyUnmatchedArticles(20);
   }
